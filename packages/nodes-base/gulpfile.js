@@ -1,16 +1,18 @@
-const { existsSync, promises: { writeFile } } = require('fs');
+const { existsSync, mkdirSync, promises: { writeFile } } = require('fs');
 const path = require('path');
 const { task, src, dest } = require('gulp');
 
 const ALLOWED_HEADER_KEYS = ['displayName', 'description'];
 const PURPLE_ANSI_COLOR_CODE = 35;
 
-task('build:icons', copyIcons);
+task('build:assets', copyAssets);
 
-function copyIcons() {
-	src('nodes/**/*.{png,svg}').pipe(dest('dist/nodes'))
+function copyAssets() {
+	['nodes', 'credentials'].forEach((dir) => {
+		src(`${dir}/**/*.{json,png,svg}`).pipe(dest(`dist/${dir}`))
+	});
 
-	return src('credentials/**/*.{png,svg}').pipe(dest('dist/credentials'));
+	return Promise.resolve();
 }
 
 task('build:translations', writeHeaders);
@@ -94,6 +96,10 @@ function isValidHeader(header, allowedHeaderKeys) {
 }
 
 function writeDistFile(data, distPath) {
+	if (!existsSync(distPath)){
+		mkdirSync(path.dirname(distPath), { recursive: true });
+	}
+
 	writeFile(
 		distPath,
 		`module.exports = ${JSON.stringify(data, null, 2)}`,

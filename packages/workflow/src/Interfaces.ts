@@ -248,9 +248,17 @@ export interface IAuthenticateRuleResponseCode extends IAuthenticateRuleBase {
 	};
 }
 
+export interface IAuthenticateRuleResponseSuccessBody extends IAuthenticateRuleBase {
+	type: 'responseSuccessBody';
+	properties: {
+		message: string;
+		key: string;
+		value: any;
+	};
+}
 export interface ICredentialTestRequest {
 	request: IHttpRequestOptions;
-	rules?: IAuthenticateRuleResponseCode[];
+	rules?: IAuthenticateRuleResponseCode[] | IAuthenticateRuleResponseSuccessBody[];
 }
 
 export interface ICredentialTestRequestData {
@@ -853,6 +861,8 @@ export interface INodePropertyTypeOptions {
 	rows?: number; // Supported by: string
 	showAlpha?: boolean; // Supported by: color
 	sortable?: boolean; // Supported when "multipleValues" set to true
+	truncate?: boolean; // Supported by: notice
+	truncateAt?: number; // Supported by: notice
 	[key: string]: any;
 }
 
@@ -1105,7 +1115,7 @@ export interface IRequestOptionsFromParameters {
 }
 
 export interface INodeTypeDescription extends INodeTypeBaseDescription {
-	version: number;
+	version: number | number[];
 	defaults: INodeParameters;
 	eventTriggerDescription?: string;
 	activationMessage?: string;
@@ -1402,10 +1412,22 @@ export interface INodesGraph {
 	node_types: string[];
 	node_connections: IDataObject[];
 	nodes: INodesGraphNode;
+	notes: INotesGraphNode;
 }
 
 export interface INodesGraphNode {
 	[key: string]: INodeGraphItem;
+}
+
+export interface INotesGraphNode {
+	[key: string]: INoteGraphItem;
+}
+
+export interface INoteGraphItem {
+	overlapping: boolean;
+	position: [number, number];
+	height: number;
+	width: number;
 }
 
 export interface INodeGraphItem {

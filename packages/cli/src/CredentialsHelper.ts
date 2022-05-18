@@ -6,7 +6,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import { Credentials, NodeExecuteFunctions } from 'n8n-core';
-
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { get } from 'lodash';
 import { NodeVersionedType } from 'n8n-nodes-base';
 
 import {
@@ -341,6 +342,7 @@ export class CredentialsHelper extends ICredentialsHelper {
 			decryptedDataOriginal as INodeParameters,
 			true,
 			false,
+			null,
 		) as ICredentialDataDecryptedObject;
 
 		if (decryptedDataOriginal.oauthTokenData !== undefined) {
@@ -423,7 +425,7 @@ export class CredentialsHelper extends ICredentialsHelper {
 		// eslint-disable-next-line @typescript-eslint/await-thenable
 		const credentials = await this.getCredentials(nodeCredentials, type);
 
-		if (Db.collections.Credentials === null) {
+		if (!Db.isInitialized) {
 			// The first time executeWorkflow gets called the Database has
 			// to get initialized first
 			await Db.init();
@@ -434,8 +436,6 @@ export class CredentialsHelper extends ICredentialsHelper {
 
 		// Add special database related data
 		newCredentialsData.updatedAt = new Date();
-
-		// TODO: also add user automatically depending on who is logged in, if anybody is logged in
 
 		// Save the credentials in DB
 		const findQuery = {
@@ -561,7 +561,9 @@ export class CredentialsHelper extends ICredentialsHelper {
 			parameters: {},
 			name: 'Temp-Node',
 			type: nodeType.description.name,
-			typeVersion: nodeType.description.version,
+			typeVersion: Array.isArray(nodeType.description.version)
+				? nodeType.description.version.slice(-1)[0]
+				: nodeType.description.version,
 			position: [0, 0],
 		};
 
@@ -633,8 +635,10 @@ export class CredentialsHelper extends ICredentialsHelper {
 			mode,
 		);
 
+		let response: INodeExecutionData[][] | null | undefined;
+
 		try {
-			await routingNode.runNode(
+			response = await routingNode.runNode(
 				inputData,
 				runIndex,
 				nodeTypeCopy,
@@ -681,6 +685,24 @@ export class CredentialsHelper extends ICredentialsHelper {
 				status: 'Error',
 				message: error.message.toString(),
 			};
+		}
+
+		if (
+			credentialTestFunction.testRequest.rules &&
+			Array.isArray(credentialTestFunction.testRequest.rules)
+		) {
+			// Special testing rules are defined so check all in order
+			for (const rule of credentialTestFunction.testRequest.rules) {
+				if (rule.type === 'responseSuccessBody') {
+					const responseData = response![0][0].json;
+					if (get(responseData, rule.properties.key) === rule.properties.value) {
+						return {
+							status: 'Error',
+							message: rule.properties.message,
+						};
+					}
+				}
+			}
 		}
 
 		return {
@@ -731,4 +753,14 @@ export async function getCredentialForUser(
 	if (!sharedCredential) return null;
 
 	return sharedCredential.credentials as ICredentialsDb;
+}
+
+/**
+ * Get a credential without user check
+ */
+export async function getCredentialWithoutUser(
+	credentialId: string,
+): Promise<ICredentialsDb | undefined> {
+	const credential = await Db.collections.Credentials.findOne(credentialId);
+	return credential;
 }
