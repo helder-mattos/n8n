@@ -57,7 +57,7 @@ export class Ftpes implements INodeType {
 				displayOptions: {
 					show: {
 						protocol: [
-							'ftp', 'ftpes'
+							'ftp'
 						],
 					},
 				},
@@ -86,16 +86,12 @@ export class Ftpes implements INodeType {
 						value: 'ftp',
 					},
 					{
-						name: 'FTPES',
-						value: 'ftpes',
-					},
-					{
 						name: 'SFTP',
 						value: 'sftp',
 					},
 				],
 				default: 'ftp',
-				description: 'File transfer protocol.',
+				description: 'File transfer protocol',
 			},
 			{
 				displayName: 'Operation',
@@ -105,33 +101,72 @@ export class Ftpes implements INodeType {
 					{
 						name: 'Delete',
 						value: 'delete',
-						description: 'Delete a file/folder.',
+						description: 'Delete a file/folder',
 					},
 					{
 						name: 'Download',
 						value: 'download',
-						description: 'Download a file.',
+						description: 'Download a file',
 					},
 					{
 						name: 'List',
 						value: 'list',
-						description: 'List folder content.',
+						description: 'List folder content',
 					},
 					{
 						name: 'Rename',
 						value: 'rename',
-						description: 'Rename/move oldPath to newPath.',
+						description: 'Rename/move oldPath to newPath',
 					},
 					{
 						name: 'Upload',
 						value: 'upload',
-						description: 'Upload a file.',
+						description: 'Upload a file',
 					},
 				],
 				default: 'download',
-				description: 'Operation to perform.',
+				description: 'Operation to perform',
 				noDataExpression: true,
 			},
+
+			// ----------------------------------
+			//         FTP TLS Support
+			// ----------------------------------
+
+			{
+				displayName: 'Enable TLS',
+				displayOptions: {
+					show: {
+						protocol: [
+							'ftp',
+						],
+					},
+				},
+				name: 'secure',
+				type: 'boolean',
+				default: false,
+				description: 'Enable TLS connection for FTP servers',
+				required: true,
+			},
+			{
+				displayName: 'Force PASV',
+				displayOptions: {
+					show: {
+						protocol: [
+							'ftp',
+						],
+						secure: [
+							true,
+						],
+					},
+				},
+				name: 'forcePasv',
+				type: 'boolean',
+				default: false,
+				description: 'Force PASV command on connection to allow compatibility with old FTP servers not supporting EPSV command.',
+				required: false,
+			},
+
 
 			// ----------------------------------
 			//         delete
@@ -171,7 +206,7 @@ export class Ftpes implements INodeType {
 						name: 'folder',
 						type: 'boolean',
 						default: false,
-						description: 'When set to true, folders can be deleted.',
+						description: 'When set to true, folders can be deleted',
 						required: true,
 					},
 					{
@@ -186,7 +221,7 @@ export class Ftpes implements INodeType {
 						name: 'recursive',
 						type: 'boolean',
 						default: false,
-						description: 'If true, remove all files and directories in target directory.',
+						description: 'If true, remove all files and directories in target directory',
 						required: true,
 					},
 				],
@@ -223,7 +258,7 @@ export class Ftpes implements INodeType {
 				name: 'binaryPropertyName',
 				type: 'string',
 				default: 'data',
-				description: 'Object property name which holds binary data.',
+				description: 'Object property name which holds binary data',
 				required: true,
 			},
 
@@ -279,7 +314,7 @@ export class Ftpes implements INodeType {
 						name: 'createDirectories',
 						type: 'boolean',
 						default: false,
-						description: `Recursively create destination directory when renaming an existing file or folder`,
+						description: 'Recursively create destination directory when renaming an existing file or folder',
 					},
 				],
 			},
@@ -314,7 +349,7 @@ export class Ftpes implements INodeType {
 				name: 'binaryData',
 				type: 'boolean',
 				default: true,
-				description: 'The text content of the file to upload.',
+				description: 'The text content of the file to upload',
 			},
 			{
 				displayName: 'Binary Property',
@@ -331,7 +366,7 @@ export class Ftpes implements INodeType {
 				name: 'binaryPropertyName',
 				type: 'string',
 				default: 'data',
-				description: 'Object property name which holds binary data.',
+				description: 'Object property name which holds binary data',
 				required: true,
 			},
 			{
@@ -349,7 +384,7 @@ export class Ftpes implements INodeType {
 				name: 'fileContent',
 				type: 'string',
 				default: '',
-				description: 'The text content of the file to upload.',
+				description: 'The text content of the file to upload',
 			},
 
 			// ----------------------------------
@@ -367,7 +402,7 @@ export class Ftpes implements INodeType {
 				name: 'path',
 				type: 'string',
 				default: '/',
-				description: 'Path of directory to list contents of.',
+				description: 'Path of directory to list contents of',
 				required: true,
 			},
 			{
@@ -422,13 +457,17 @@ export class Ftpes implements INodeType {
 				});
 
 			} else {
+				const secure = this.getNodeParameter('secure', 0) as boolean;
+				const forcePasv = secure && this.getNodeParameter('forcePasv', 0) as boolean;
+
 				ftp = new ftpClient();
 				await ftp.connect({
 					host: credentials.host as string,
 					port: credentials.port as number,
 					user: credentials.username as string,
 					password: credentials.password as string,
-					secure: (protocol === 'ftpes') as boolean,
+					secure: secure as boolean,
+					forcePasv: forcePasv || false as boolean
 				});
 			}
 

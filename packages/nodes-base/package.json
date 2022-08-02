@@ -432,7 +432,7 @@
       "dist/nodes/Freshservice/Freshservice.node.js",
       "dist/nodes/FreshworksCrm/FreshworksCrm.node.js",
       "dist/nodes/Ftp/Ftp.node.js",
-      "dist/nodes/Ftpes/Ftpes.node.ts",
+      "dist/nodes/Ftpes/Ftpes.node.js",
       "dist/nodes/Function/Function.node.js",
       "dist/nodes/FunctionItem/FunctionItem.node.js",
       "dist/nodes/GetResponse/GetResponse.node.js",
